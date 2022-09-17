@@ -1,0 +1,17 @@
+[package]
+name = "sensor-net-backend-rs"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "tool to batch process images"
+maintenance = { status = "as-is" }
+readme = "README.md"
+repository = "https://github.com/hannes-hochreiner/sensor-net-backend-rs"
+publish = false
+authors = ["Hannes Hochreiner <hannes@hochreiner.net>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
