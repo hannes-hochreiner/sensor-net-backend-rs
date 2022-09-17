@@ -2,6 +2,7 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
 use log::info;
 use std::convert::Infallible;
+use std::env;
 use std::net::SocketAddr;
 
 async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
@@ -23,8 +24,14 @@ async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
 async fn main() {
     env_logger::init();
 
-    info!("starting server at 0.0.0.0:3000");
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr: SocketAddr = match env::var("HYPER_BIND_ADDRESS") {
+        Ok(s) => s,
+        Err(_) => String::from("127.0.0.1:8000"),
+    }
+    .parse()
+    .unwrap();
+
+    info!("starting server at {}", addr);
 
     // A `Service` is needed for every connection, so this
     // creates one from our `hello_world` function.

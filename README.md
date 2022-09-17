@@ -6,9 +6,10 @@ This is a re-write of the SensorNet backend in Rust.
 
 ## Environment Variables
 
-| Name | Description | Values |
-|---|---|---|
-|RUST_LOG|Logging level|error,warn,info,debug,trace|
+| Name | Description | Values | Default Value |
+|---|---|---|---|
+| RUST_LOG | Logging level | error,warn,info,debug,trace | error |
+| HYPER_BIND_ADDRESS | address for the server | \<ip address>:\<port> | 127.0.0.1:8000 |
 
 ## License
 
