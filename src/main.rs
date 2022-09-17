@@ -4,8 +4,11 @@ use hyper::{Body, Request, Response, Server};
 use hyper::service::{make_service_fn, service_fn};
 use log::info;
 
-async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    Ok(Response::new("Hello, World".into()))
+async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    let headers: String = req.headers().into_iter().map(|(name, value)| {
+        String::from(format!("{}: {}\n", name.as_str(), String::from_utf8_lossy(value.as_bytes())))
+    }).collect();
+    Ok(Response::new(format!("Hello, World\n\n{}", headers).into()))
 }
 
 #[tokio::main]
