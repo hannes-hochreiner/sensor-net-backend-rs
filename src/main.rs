@@ -5,6 +5,13 @@ use std::convert::Infallible;
 use std::env;
 use std::net::SocketAddr;
 
+async fn shutdown_signal() {
+    // Wait for the CTRL+C signal
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to install CTRL+C signal handler");
+}
+
 async fn hello_world(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let headers: String = req
         .headers()
@@ -41,9 +48,10 @@ async fn main() {
     });
 
     let server = Server::bind(&addr).serve(make_svc);
+    let graceful = server.with_graceful_shutdown(shutdown_signal());
 
     // Run this server for... forever!
-    if let Err(e) = server.await {
+    if let Err(e) = graceful.await {
         eprintln!("server error: {}", e);
     }
 }
