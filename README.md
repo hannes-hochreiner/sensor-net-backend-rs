@@ -1,3 +1,5 @@
+[![CI](https://github.com/hannes-hochreiner/sensor-net-backend-rs/actions/workflows/main.yml/badge.svg)](https://github.com/hannes-hochreiner/sensor-net-backend-rs/actions/workflows/main.yml)
+
 # SensorNet Backend
 
 This is a re-write of the SensorNet backend in Rust.
