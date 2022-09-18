@@ -10,6 +10,11 @@ This is a re-write of the SensorNet backend in Rust.
 |---|---|---|---|
 | RUST_LOG | Logging level | error,warn,info,debug,trace | error |
 | HYPER_BIND_ADDRESS | address for the server | \<ip address>:\<port> | 127.0.0.1:8000 |
+| DB_CONNECTION | connection string as used by sqlx | n/a | postgres://postgres:password@127.0.0.1:5432 |
+
+## References
+
+* [Making requests with client certificates using Hyper](https://stackoverflow.com/questions/44059266/how-to-make-a-request-with-client-certificate-in-rust)
 
 ## License
 
