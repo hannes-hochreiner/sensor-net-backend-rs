@@ -8,5 +8,5 @@ RUN source $HOME/.cargo/env && cd /opt/sensor-net-backend && cargo build --relea
 
 FROM fedora:36
 MAINTAINER Hannes Hochreiner <hannes@hochreiner.net>
-COPY --from=builder /opt/sensor-net-backend/target/release/sensor-net-backend-rs /opt/sensor-net-backend-rs
-CMD ["/opt/sensor-net-backend-rs"]
+COPY --from=builder /opt/sensor-net-backend/target/release/sensor-net-backend /opt/sensor-net-backend
+CMD ["/opt/sensor-net-backend"]
