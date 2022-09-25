@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -31,8 +31,8 @@ pub struct ParameterType {
 pub struct Measurement {
     pub db_id: Uuid,
     pub db_rev: Uuid,
-    pub ts: DateTime<Utc>,
-    pub equipment_id: Uuid,
+    pub ts: DateTime<FixedOffset>,
+    pub equipment_db_id: Uuid,
     pub index: i64,
     pub rssi: f64,
 }
@@ -41,8 +41,21 @@ pub struct Measurement {
 pub struct Parameter {
     pub db_id: Uuid,
     pub db_rev: Uuid,
-    pub measurement_id: Uuid,
-    pub parameter_type_id: Uuid,
-    pub sensor_id: Uuid,
+    pub measurement_db_id: Uuid,
+    pub parameter_type_db_id: Uuid,
+    pub sensor_db_id: Uuid,
+    pub value: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct MeasurementData {
+    pub measurement_db_id: Uuid,
+    pub ts: DateTime<FixedOffset>,
+    pub index: i64,
+    pub rssi: f64,
+    pub equipment_db_id: Uuid,
+    pub parameter_db_id: Uuid,
+    pub parameter_type_db_id: Uuid,
+    pub sensor_db_id: Uuid,
     pub value: f64,
 }

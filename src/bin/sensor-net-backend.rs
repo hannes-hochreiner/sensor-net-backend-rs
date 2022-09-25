@@ -1,9 +1,11 @@
 extern crate sensor_net_backend_rs;
 use anyhow::{anyhow, Result};
+use hyper::body::Buf;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use log::info;
 use sensor_net_backend_rs::repository::Repository;
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::env;
 use std::net::SocketAddr;
@@ -28,7 +30,27 @@ async fn service(req: Request<Body>, repo: Repository) -> Result<Response<Body>,
 }
 
 async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>> {
-    let path = req.uri().path().split("/").collect::<Vec<&str>>();
+    let path_and_query = req
+        .uri()
+        .path_and_query()
+        .ok_or(anyhow::anyhow!("error parsing path and query"))?;
+    let path = path_and_query.path().split("/").collect::<Vec<&str>>();
+    let query = path_and_query
+        .query()
+        .map(|qs| {
+            qs.split("&")
+                .map(|kv| {
+                    let tokens = kv.split("=").collect::<Vec<&str>>();
+
+                    if tokens.len() != 2 {
+                        return Err(anyhow!("error parsing query pairs"));
+                    }
+
+                    Ok((String::from(tokens[0]), String::from(tokens[1])))
+                })
+                .collect::<Result<HashMap<String, String>>>()
+        })
+        .transpose()?;
 
     match (req.method(), &path[1..]) {
         (&Method::GET, &["equipment"]) => Ok(Response::new(Body::from(serde_json::to_string(
@@ -46,6 +68,30 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
         (&Method::GET, &["parameters"]) => Ok(Response::new(Body::from(serde_json::to_string(
             &repo.get_all_parameters().await?,
         )?))),
+        (&Method::PUT, &["message"]) => Ok(Response::new(Body::from(serde_json::to_string(
+            &repo
+                .put_message(serde_json::from_reader(
+                    hyper::body::aggregate(req.into_body()).await?.reader(),
+                )?)
+                .await?,
+        )?))),
+        (&Method::GET, &["measurement_data"]) => {
+            let query = query.ok_or(anyhow!("not query parameters found"))?;
+            let start_time = chrono::DateTime::parse_from_rfc3339(
+                query
+                    .get("startTime")
+                    .ok_or(anyhow!("start time not found"))?,
+            )?;
+            let end_time = chrono::DateTime::parse_from_rfc3339(
+                query.get("endTime").ok_or(anyhow!("end time not found"))?,
+            )?;
+
+            Ok(Response::new(Body::from(serde_json::to_string(
+                &repo
+                    .get_measurement_data_by_start_end_time(&start_time, &end_time)
+                    .await?,
+            )?)))
+        }
         _ => {
             let mut not_found = Response::default();
             *not_found.status_mut() = StatusCode::NOT_FOUND;

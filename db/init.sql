@@ -24,7 +24,7 @@ CREATE TABLE measurements (
   db_id uuid PRIMARY KEY,
   db_rev uuid NOT NULL,
   ts timestamp with time zone NOT NULL,
-  equipment_id uuid REFERENCES equipment (db_id) NOT NULL,
+  equipment_db_id uuid REFERENCES equipment (db_id) NOT NULL,
   index BIGINT NOT NULL,
   rssi float NOT NULL
 );
@@ -32,14 +32,14 @@ CREATE TABLE measurements (
 CREATE TABLE parameters (
   db_id uuid PRIMARY KEY,
   db_rev uuid NOT NULL,
-  measurement_id uuid REFERENCES measurements (db_id) NOT NULL,
-  parameter_type_id uuid REFERENCES parameter_types (db_id) NOT NULL,
-  sensor_id uuid REFERENCES sensors (db_id) NOT NULL,
+  measurement_db_id uuid REFERENCES measurements (db_id) NOT NULL,
+  parameter_type_db_id uuid REFERENCES parameter_types (db_id) NOT NULL,
+  sensor_db_id uuid REFERENCES sensors (db_id) NOT NULL,
   value float NOT NULL
 );
 
-CREATE UNIQUE INDEX measurement_unique ON measurements(ts, equipment_id, index);
-CREATE UNIQUE INDEX parameter_unique ON parameters(measurement_id, parameter_type_id, sensor_id);
+CREATE UNIQUE INDEX measurement_unique ON measurements(ts, equipment_db_id, index);
+CREATE UNIQUE INDEX parameter_unique ON parameters(measurement_db_id, parameter_type_db_id, sensor_db_id);
 
 CREATE ROLE api_user LOGIN PASSWORD 'api_user';
 

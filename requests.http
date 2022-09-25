@@ -1,0 +1,33 @@
+GET http://localhost:8000/sensors
+
+###
+
+GET http://localhost:8000/equipment
+
+###
+
+PUT http://localhost:8000/message
+
+{
+  "type": "rfm",
+  "rssi": -87,
+  "timestamp": "2020-04-18T15:59:56.071Z",
+  "message": {
+    "mcuId": "005a0000-33373938-17473634",
+    "index": 1524,
+    "measurements": [
+      {
+        "sensorId": "be01",
+        "parameters": {
+          "temperature": { "value": 25.68000030517578, "unit": "°C" },
+          "relativeHumidity": { "value": 33.9677734375, "unit": "%" },
+          "pressure": { "value": 1001.1699829101562, "unit": "mbar" }
+        }
+      }
+    ]
+  }
+}
+
+###
+
+GET http://localhost:8000/measurement_data?startTime=2019-09-25T00:00:00Z&endTime=2022-09-26T00:00:00Z
