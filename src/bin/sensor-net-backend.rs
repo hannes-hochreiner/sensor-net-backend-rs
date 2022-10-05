@@ -1,9 +1,15 @@
 extern crate sensor_net_backend_rs;
 use anyhow::{anyhow, Result};
+use chrono::{DateTime, FixedOffset, Timelike};
 use hyper::body::Buf;
+use hyper::header::CONTENT_TYPE;
+use hyper::http::HeaderValue;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use log::info;
+use plotters::prelude::{ChartBuilder, IntoDrawingArea, SVGBackend};
+use plotters::series::LineSeries;
+use plotters::style::{Color, ShapeStyle, BLUE, WHITE};
 use sensor_net_backend_rs::repository::Repository;
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -92,6 +98,54 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
                     .await?,
             )?)))
         }
+        (&Method::GET, &["plot"]) => {
+            log::debug!("plot");
+            let query = query.ok_or(anyhow!("not query parameters found"))?;
+            log::debug!("query");
+            let start_time = chrono::DateTime::parse_from_rfc3339(
+                query
+                    .get("startTime")
+                    .ok_or(anyhow!("start time not found"))?,
+            )?;
+            log::debug!("got starttime");
+            let end_time = chrono::DateTime::parse_from_rfc3339(
+                query.get("endTime").ok_or(anyhow!("end time not found"))?,
+            )?;
+            let equipment_db_id = uuid::Uuid::parse_str(
+                query
+                    .get("equipmentDbId")
+                    .ok_or(anyhow!("equipment db id not found"))?,
+            )?;
+            let sensor_db_id = uuid::Uuid::parse_str(
+                query
+                    .get("sensorDbId")
+                    .ok_or(anyhow!("sensor db id not found"))?,
+            )?;
+            let parameter_type_db_id = uuid::Uuid::parse_str(
+                query
+                    .get("parameterTypeDbId")
+                    .ok_or(anyhow!("parameter type db id not found"))?,
+            )?;
+
+            log::debug!("got all parameters");
+
+            let vals = repo
+                .get_parameter_values(
+                    &start_time,
+                    &end_time,
+                    &equipment_db_id,
+                    &sensor_db_id,
+                    &parameter_type_db_id,
+                )
+                .await?;
+
+            log::debug!("got {} vals", vals.len());
+
+            let mut resp = Response::new(plot_data(&vals)?.into());
+            resp.headers_mut()
+                .insert(CONTENT_TYPE, HeaderValue::from_static("image/svg+xml"));
+            Ok(resp)
+        }
         _ => {
             let mut not_found = Response::default();
             *not_found.status_mut() = StatusCode::NOT_FOUND;
@@ -136,4 +190,85 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn plot_data(data: &Vec<(DateTime<FixedOffset>, f64)>) -> anyhow::Result<String> {
+    let mut buffer = String::new();
+    {
+        let original_style = ShapeStyle {
+            color: BLUE.mix(1.0),
+            filled: false,
+            stroke_width: 5,
+        };
+        let mut min_max_x: (Option<DateTime<FixedOffset>>, Option<DateTime<FixedOffset>>) =
+            (None, None);
+        let mut min_max_y: (Option<f64>, Option<f64>) = (None, None);
+
+        for datum in data {
+            match min_max_x.0 {
+                None => min_max_x.0 = Some(datum.0),
+                Some(val) => {
+                    if val > datum.0 {
+                        min_max_x.0 = Some(datum.0)
+                    }
+                }
+            }
+            match min_max_x.1 {
+                None => min_max_x.1 = Some(datum.0),
+                Some(val) => {
+                    if val < datum.0 {
+                        min_max_x.1 = Some(datum.0)
+                    }
+                }
+            }
+            match min_max_y.0 {
+                None => min_max_y.0 = Some(datum.1),
+                Some(val) => {
+                    if val > datum.1 {
+                        min_max_y.0 = Some(datum.1)
+                    }
+                }
+            }
+            match min_max_y.1 {
+                None => min_max_y.1 = Some(datum.1),
+                Some(val) => {
+                    if val < datum.1 {
+                        min_max_y.1 = Some(datum.1)
+                    }
+                }
+            }
+        }
+
+        let root = SVGBackend::with_string(&mut buffer, (640, 480)).into_drawing_area();
+        root.fill(&WHITE).unwrap();
+        let mut chart = ChartBuilder::on(&root)
+            .margin(5)
+            .x_label_area_size(50)
+            .y_label_area_size(50)
+            .build_cartesian_2d(
+                min_max_x.0.ok_or(anyhow::anyhow!("no x min found"))?
+                    ..min_max_x.1.ok_or(anyhow::anyhow!("no x max found"))?,
+                min_max_y.0.ok_or(anyhow::anyhow!("no y min found"))?
+                    ..min_max_y.1.ok_or(anyhow::anyhow!("no y max found"))?,
+            )
+            .unwrap();
+
+        chart
+            .configure_mesh()
+            .x_label_style(("sans-serif", 20))
+            .y_label_style(("sans-serif", 20))
+            .x_labels(5)
+            .x_label_formatter(&datetime_formatter)
+            .draw()
+            .unwrap();
+        chart
+            .draw_series(LineSeries::new(data.clone(), original_style))
+            .unwrap();
+    }
+
+    Ok(buffer)
+}
+
+fn datetime_formatter(datetime: &DateTime<FixedOffset>) -> String {
+    format!("{:02}:{:02}", datetime.hour(), datetime.minute())
 }

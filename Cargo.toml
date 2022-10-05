@@ -25,3 +25,5 @@ chrono = { version = "0.4.22", features = ["serde"]}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0.85", features = ["std"] }
 thiserror = "1.0.35"
+# dnf install fontconfig-devel freetype-devel pkgconf-pkg-config
+plotters = { version = "0.3" }

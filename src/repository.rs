@@ -22,6 +22,25 @@ impl Repository {
         Ok(Repository { pool })
     }
 
+    pub async fn get_parameter_values(
+        &self,
+        start_time: &DateTime<FixedOffset>,
+        end_time: &DateTime<FixedOffset>,
+        equipment_db_id: &Uuid,
+        sensor_db_id: &Uuid,
+        parameter_type_db_id: &Uuid,
+    ) -> Result<Vec<(DateTime<FixedOffset>, f64)>, SensorNetBackendError> {
+        sqlx::query_as("SELECT m.ts, p.value as value FROM measurements m LEFT JOIN parameters p ON m.db_id = p.measurement_db_id WHERE m.ts >= $1 AND m.ts < $2 AND m.equipment_db_id = $3 AND p.sensor_db_id = $4 AND p.parameter_type_db_id = $5 ORDER BY m.ts ASC")
+            .bind(start_time)
+            .bind(end_time)
+            .bind(equipment_db_id)
+            .bind(sensor_db_id)
+            .bind(parameter_type_db_id)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.into())
+    }
+
     pub async fn get_measurement_data_by_start_end_time(
         &self,
         start_time: &DateTime<FixedOffset>,

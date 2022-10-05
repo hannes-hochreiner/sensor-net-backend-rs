@@ -6,6 +6,10 @@ GET http://localhost:8000/equipment
 
 ###
 
+GET http://localhost:8000/plot?startTime=2010-01-01T00:00:00Z&endTime=2030-01-01T00:00:00Z&equipmentDbId=0c566fa8-9435-46d0-9648-4486e0c25746&sensorDbId=3dbfdfa1-3f45-428e-99af-4de2535cefc6&parameterTypeDbId=3a911abe-8994-42c1-b0e4-24e08a86db70
+
+###
+
 PUT http://localhost:8000/message
 
 {
