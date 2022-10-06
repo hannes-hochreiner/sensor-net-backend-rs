@@ -46,7 +46,18 @@ impl Repository {
         start_time: &DateTime<FixedOffset>,
         end_time: &DateTime<FixedOffset>,
     ) -> Result<Vec<MeasurementData>, SensorNetBackendError> {
-        sqlx::query_as("SELECT m.db_id as measurement_db_id, m.ts, m.index, m.rssi, m.equipment_db_id, p.db_id as parameter_db_id, p.parameter_type_db_id, p.sensor_db_id, p.value FROM measurements m LEFT JOIN parameters p ON m.db_id = p.measurement_db_id WHERE m.ts >= $1 AND m.ts < $2").bind(start_time).bind(end_time)
+        sqlx::query_as("SELECT m.db_id as measurement_db_id, m.ts, m.index, m.rssi, m.equipment_db_id, p.db_id as parameter_db_id, p.parameter_type_db_id, p.sensor_db_id, p.value FROM measurements m LEFT JOIN parameters p ON m.db_id = p.measurement_db_id WHERE m.ts >= $1 AND m.ts < $2")
+            .bind(start_time)
+            .bind(end_time)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn get_measurement_data_latest(
+        &self,
+    ) -> Result<Vec<MeasurementData>, SensorNetBackendError> {
+        sqlx::query_as("SELECT m.db_id as measurement_db_id, m.ts, m.index, m.rssi, m.equipment_db_id, p.db_id as parameter_db_id, p.parameter_type_db_id, p.sensor_db_id, p.value FROM measurements m RIGHT JOIN (SELECT max(ts) as max_ts, equipment_db_id FROM measurements GROUP BY equipment_db_id) max_m ON m.equipment_db_id = max_m.equipment_db_id AND m.ts = max_m.max_ts LEFT JOIN parameters p ON m.db_id = p.measurement_db_id")
             .fetch_all(&self.pool)
             .await
             .map_err(|e| e.into())

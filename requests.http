@@ -35,3 +35,7 @@ PUT http://localhost:8000/message
 ###
 
 GET http://localhost:8000/measurement_data?startTime=2019-09-25T00:00:00Z&endTime=2022-09-26T00:00:00Z
+
+###
+
+GET http://localhost:8000/measurement_data/latest

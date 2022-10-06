@@ -98,6 +98,9 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
                     .await?,
             )?)))
         }
+        (&Method::GET, &["measurement_data", "latest"]) => Ok(Response::new(Body::from(
+            serde_json::to_string(&repo.get_measurement_data_latest().await?)?,
+        ))),
         (&Method::GET, &["plot"]) => {
             log::debug!("plot");
             let query = query.ok_or(anyhow!("not query parameters found"))?;
