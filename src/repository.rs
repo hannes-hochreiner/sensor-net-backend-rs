@@ -228,7 +228,7 @@ impl Repository {
             .select_parameter_type_by_id_unit(&id, &unit, trans)
             .await?
         {
-            Some(equ) => Ok(equ),
+            Some(parameter_type) => Ok(parameter_type),
             None => Ok(self
                 .insert_parameter_type(
                     &ParameterType {

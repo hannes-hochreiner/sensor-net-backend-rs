@@ -16,7 +16,7 @@ CREATE TABLE parameter_types (
   db_id uuid PRIMARY KEY,
   db_rev uuid NOT NULL,
   id varchar(1024) UNIQUE NOT NULL,
-  unit varchar(1024) UNIQUE NOT NULL,
+  unit varchar(1024) NOT NULL,
   info varchar(1024)
 );
 
@@ -44,6 +44,6 @@ CREATE UNIQUE INDEX parameter_unique ON parameters(measurement_db_id, parameter_
 CREATE ROLE {{db_api_user}} LOGIN PASSWORD '{{db_api_password}}';
 CREATE ROLE {{db_web_user}} LOGIN PASSWORD '{{db_web_password}}';
 
-GRANT SELECT ON equipment, sensors, parameter_types TO {{db_api_user}};
+GRANT SELECT ON equipment, sensors, parameter_types, measurements, parameters TO {{db_api_user}};
 GRANT INSERT ON equipment, sensors, parameter_types, measurements, parameters TO {{db_api_user}};
 GRANT SELECT ON equipment, sensors, parameter_types, measurements, parameters TO {{db_web_user}};
