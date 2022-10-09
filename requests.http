@@ -14,7 +14,7 @@ PUT http://localhost:8000/message
 
 {
   "type": "rfm",
-  "rssi": -87,
+  "rssi": "-87",
   "timestamp": "2020-04-18T15:59:56.071Z",
   "message": {
     "mcuId": "005a0000-33373938-17473634",

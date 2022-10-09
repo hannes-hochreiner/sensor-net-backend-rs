@@ -346,8 +346,9 @@ impl Repository {
 
         // get rssi
         let rssi = value["rssi"]
-            .as_f64()
-            .ok_or(anyhow::anyhow!("error parsing rssi"))?;
+            .as_str()
+            .ok_or(anyhow::anyhow!("error parsing rssi string"))?
+            .parse::<f64>()?;
 
         // get timestamp
         let ts = chrono::DateTime::parse_from_rfc3339(
