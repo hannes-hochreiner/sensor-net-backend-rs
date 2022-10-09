@@ -1,5 +1,4 @@
 use chrono::{DateTime, FixedOffset};
-use log::info;
 use sqlx::Transaction;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use uuid::Uuid;
