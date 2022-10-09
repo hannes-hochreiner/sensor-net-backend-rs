@@ -6,7 +6,6 @@ use hyper::header::CONTENT_TYPE;
 use hyper::http::HeaderValue;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
-use log::info;
 use plotters::prelude::{ChartBuilder, IntoDrawingArea, SVGBackend};
 use plotters::series::LineSeries;
 use plotters::style::{Color, ShapeStyle, BLUE, WHITE};
@@ -27,7 +26,10 @@ async fn service(req: Request<Body>, repo: Repository) -> Result<Response<Body>,
     match router(req, &repo).await {
         Ok(resp) => Ok(resp),
         Err(err) => {
+            log::error!("service error: {}", err);
+
             let mut server_error = Response::default();
+
             *server_error.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
             *server_error.body_mut() = Body::from(format!("Server error: {}", err));
             Ok(server_error)
@@ -173,7 +175,7 @@ async fn main() -> Result<()> {
     }
     .parse()?;
 
-    info!("starting server at http://{}", addr);
+    log::info!("starting server at http://{}", addr);
 
     // A `Service` is needed for every connection, so this
     // creates one from our `service` function.
@@ -188,7 +190,7 @@ async fn main() -> Result<()> {
 
     // Run this server for... forever!
     if let Err(e) = graceful.await {
-        eprintln!("server error: {}", e);
+        log::error!("server error: {}", e);
         return Err(anyhow!(e));
     }
 
