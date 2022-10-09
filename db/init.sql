@@ -41,6 +41,9 @@ CREATE TABLE parameters (
 CREATE UNIQUE INDEX measurement_unique ON measurements(ts, equipment_db_id, index);
 CREATE UNIQUE INDEX parameter_unique ON parameters(measurement_db_id, parameter_type_db_id, sensor_db_id);
 
-CREATE ROLE api_user LOGIN PASSWORD 'api_user';
+CREATE ROLE {{db_api_user}} LOGIN PASSWORD '{{db_api_password}}';
+CREATE ROLE {{db_web_user}} LOGIN PASSWORD '{{db_web_password}}';
 
-GRANT SELECT, INSERT, UPDATE ON sensors TO api_user;
+GRANT SELECT ON equipment, sensors, parameter_types TO {{db_api_user}};
+GRANT INSERT ON equipment, sensors, parameter_types, measurements, parameters TO {{db_api_user}};
+GRANT SELECT ON equipment, sensors, parameter_types, measurements, parameters TO {{db_web_user}};
