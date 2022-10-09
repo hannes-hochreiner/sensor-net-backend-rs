@@ -68,10 +68,6 @@ curl localhost:8080/sensor
 curl localhost:8080/parameter_type
 ```
 
-## References
-
-* [Making requests with client certificates using Hyper](https://stackoverflow.com/questions/44059266/how-to-make-a-request-with-client-certificate-in-rust)
-
 ## License
 
 This work is licensed under the MIT license.
