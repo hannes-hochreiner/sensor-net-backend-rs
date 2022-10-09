@@ -345,8 +345,6 @@ impl Repository {
             .as_i64()
             .ok_or(anyhow::anyhow!("error parsing index"))?;
 
-        info!("{:?}", value["rssi"]);
-
         // get rssi
         let rssi = value["rssi"]
             .as_f64()
@@ -359,6 +357,13 @@ impl Repository {
                 .ok_or(anyhow::anyhow!("error parsing timestamp"))?,
         )?;
 
+        log::debug!(
+            "put_message: index: {}, rssi: {}, timestamp: {}",
+            index,
+            rssi,
+            ts
+        );
+
         // get equipment
         let equipment_id = value["message"]["mcuId"]
             .as_str()
@@ -367,10 +372,14 @@ impl Repository {
             .get_or_create_equipment(String::from(equipment_id), None, &mut trans)
             .await?;
 
+        log::debug!("put_message: equipment: {:?}", equipment);
+
         // get measurement
         let measurement = self
             .get_or_create_measurement(&ts, &equipment.db_id, index, rssi, &mut trans)
             .await?;
+
+        log::debug!("put_message: measurement: {:?}", measurement);
 
         for meas in value["message"]["measurements"]
             .as_array()
@@ -382,6 +391,8 @@ impl Repository {
             let sensor = self
                 .get_or_create_sensor(String::from(sensor_id), None, &mut trans)
                 .await?;
+
+            log::debug!("put_message: sensor: {:?}", sensor);
 
             let parameters = meas["parameters"]
                 .as_object()
@@ -402,6 +413,9 @@ impl Repository {
                         &mut trans,
                     )
                     .await?;
+
+                log::debug!("put_message: parameter_type: {:?}", parameter_type);
+
                 let parameter = Parameter {
                     db_id: Uuid::new_v4(),
                     db_rev: Uuid::new_v4(),
@@ -412,6 +426,8 @@ impl Repository {
                 };
 
                 self.insert_parameter(&parameter, &mut trans).await?;
+
+                log::debug!("put_message: inserted parameter: {:?}", parameter);
             }
         }
 
