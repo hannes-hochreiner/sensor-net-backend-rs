@@ -27,3 +27,4 @@ serde_json = { version = "1.0.85", features = ["std"] }
 thiserror = "1.0.35"
 # dnf install fontconfig-devel freetype-devel pkgconf-pkg-config
 plotters = { version = "0.3" }
+url = "2.3"

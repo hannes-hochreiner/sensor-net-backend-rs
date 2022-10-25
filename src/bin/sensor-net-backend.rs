@@ -10,6 +10,7 @@ use plotters::prelude::{ChartBuilder, IntoDrawingArea, SVGBackend};
 use plotters::series::LineSeries;
 use plotters::style::{Color, ShapeStyle, BLUE, WHITE};
 use sensor_net_backend_rs::repository::Repository;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::env;
@@ -43,22 +44,14 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
         .path_and_query()
         .ok_or(anyhow::anyhow!("error parsing path and query"))?;
     let path = path_and_query.path().split("/").collect::<Vec<&str>>();
-    let query = path_and_query
-        .query()
-        .map(|qs| {
-            qs.split("&")
-                .map(|kv| {
-                    let tokens = kv.split("=").collect::<Vec<&str>>();
-
-                    if tokens.len() != 2 {
-                        return Err(anyhow!("error parsing query pairs"));
-                    }
-
-                    Ok((String::from(tokens[0]), String::from(tokens[1])))
-                })
-                .collect::<Result<HashMap<String, String>>>()
-        })
-        .transpose()?;
+    let query: HashMap<Cow<str>, Cow<str>> = url::form_urlencoded::parse(
+        match path_and_query.query() {
+            Some(val) => val,
+            None => "",
+        }
+        .as_bytes(),
+    )
+    .collect();
 
     match (req.method(), &path[1..]) {
         (&Method::GET, &["equipment"]) => Ok(Response::new(Body::from(serde_json::to_string(
@@ -84,7 +77,6 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
                 .await?,
         )?))),
         (&Method::GET, &["measurement_data"]) => {
-            let query = query.ok_or(anyhow!("not query parameters found"))?;
             let start_time = chrono::DateTime::parse_from_rfc3339(
                 query
                     .get("startTime")
@@ -105,8 +97,6 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
         ))),
         (&Method::GET, &["plot"]) => {
             log::debug!("plot");
-            let query = query.ok_or(anyhow!("not query parameters found"))?;
-            log::debug!("query");
             let start_time = chrono::DateTime::parse_from_rfc3339(
                 query
                     .get("startTime")
@@ -162,6 +152,7 @@ async fn router(req: Request<Body>, repo: &Repository) -> Result<Response<Body>>
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
+    log::info!("starting...");
 
     let repo = Repository::new(match env::var("DB_CONNECTION") {
         Ok(s) => s,

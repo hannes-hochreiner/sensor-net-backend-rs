@@ -9,6 +9,9 @@ GET http://localhost:8000/equipment
 GET http://localhost:8000/plot?startTime=2010-01-01T00:00:00Z&endTime=2030-01-01T00:00:00Z&equipmentDbId=0c566fa8-9435-46d0-9648-4486e0c25746&sensorDbId=3dbfdfa1-3f45-428e-99af-4de2535cefc6&parameterTypeDbId=3a911abe-8994-42c1-b0e4-24e08a86db70
 
 ###
+GET http://127.0.0.1:8000/plot?startTime=2022-10-24T18%3A54%3A35.994%2B00%3A00&endTime=2022-10-25T18%3A54%3A35.994%2B00%3A00&equipmentDbId=71c06230-456d-41df-a8bf-91e8ddf89a39&sensorDbId=35f13be5-4853-45c5-a8a9-c8a86f380a69&parameterTypeDbId=3a911abe-8994-42c1-b0e4-24e08a86db70
+
+###
 
 PUT http://localhost:8000/message
 
