@@ -29,6 +29,7 @@
             fontconfig
             freetype
             pkgconf
+            pkg-config-unwrapped
           ];
         };
       in
