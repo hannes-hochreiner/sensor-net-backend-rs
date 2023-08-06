@@ -20,68 +20,74 @@
         };
 
         craneLib = crane.lib.${system};
-        rust-flake-test = craneLib.buildPackage {
+        sensor-net-backend = craneLib.buildPackage {
           src = craneLib.cleanCargoSource ./.;
 
-          buildInputs = with pkgs; [
+          nativeBuildInputs = with pkgs; [
             # Add additional build inputs here
             gcc
             fontconfig
             freetype
             pkgconf
             pkg-config-unwrapped
+            expat
           ];
+
+          buildInputs = with pkgs; [
+            freetype
+          ];
+
+          PKG_CONFIG_PATH = "${pkgs.expat.dev}/lib/pkgconfig:${pkgs.fontconfig.dev}/lib/pkgconfig:${pkgs.freetype.dev}/lib/pkgconfig";
         };
       in
       {
         checks = {
-          inherit rust-flake-test;
+          inherit sensor-net-backend;
         };
 
-        packages.default = rust-flake-test;
+        packages.default = sensor-net-backend;
 
         apps.default = flake-utils.lib.mkApp {
-          drv = rust-flake-test;
+          drv = sensor-net-backend;
         };
 
-        # nixosModules.default = { config, lib, pkgs, ... }:
-        #   with lib;
-        #   let cfg = config.hochreiner.services.rusthello;
-        #   in {
-        #     options.hochreiner.services.rusthello = {
-        #       enable = mkEnableOption "Enables the rust hello service";
-        #     };
+        nixosModules.default = { config, lib, pkgs, ... }:
+          with lib;
+          let cfg = config.hochreiner.services.sensor-net-backend;
+          in {
+            options.hochreiner.services.sensor-net-backend = {
+              enable = mkEnableOption "Enables the sensor-net-backend service";
+              env_path = mkOption {
+                type = lib.types.path;
+                description = "Sets the path of the event-extractor environment file";
+              };
+              user = mkOption {
+                type = lib.types.str;
+                description = "Sets the user for the service";
+              };
+              group = mkOption {
+                type = lib.types.str;
+                description = "Sets the group for the service";
+              };
+            };
 
-        #     config = mkIf cfg.enable {
-        #       systemd.services."hochreiner.rusthello" = {
-        #         description = "rust hello test service";
-        #         wantedBy = [ "multi-user.target" ];
+            config = mkIf cfg.enable {
+              systemd.services."hochreiner.sensor-net-backend" = {
+                description = "SensorNet backend service";
+                wantedBy = [ "multi-user.target" ];
 
-        #         serviceConfig = let pkg = self.packages.${system}.default;
-        #         in {
-        #           # Restart = "on-failure";
-        #           Type = "oneshot";
-        #           ExecStart = "${pkg}/bin/rust-flake-test";
-        #           DynamicUser = "yes";
-        #           RuntimeDirectory = "hochreiner.rusthello";
-        #           RuntimeDirectoryMode = "0755";
-        #           StateDirectory = "hochreiner.rusthello";
-        #           StateDirectoryMode = "0700";
-        #           CacheDirectory = "hochreiner.rusthello";
-        #           CacheDirectoryMode = "0750";
-        #         };
-        #       };
-        #       systemd.timers."hochreiner.rusthello" = {
-        #         description = "timer for the rust hello test service";
-        #         wantedBy = [ "multi-user.target" ];
-        #         timerConfig = {
-        #           OnBootSec="5min";
-        #           OnUnitInactiveSec="5min";
-        #           Unit="hochreiner.rusthello.service";
-        #         };
-        #       };
-        #     };
-        #   };
+                serviceConfig = let pkg = self.packages.${system}.default;
+                in {
+                  Restart = "on-failure";
+                  Type = "simple";
+                  ExecStart = "${pkg}/bin/sensor-net-backend";
+                  EnvironmentFile = cfg.env_path;
+                  User = cfg.user;
+                  Group = cfg.group;
+                };
+              };
+            };
+          };
 
         devShells.default = pkgs.mkShell {
           inputsFrom = builtins.attrValues self.checks;
