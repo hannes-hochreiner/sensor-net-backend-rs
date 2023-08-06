@@ -23,8 +23,12 @@
         rust-flake-test = craneLib.buildPackage {
           src = craneLib.cleanCargoSource ./.;
 
-          buildInputs = [
+          buildInputs = with pkgs; [
             # Add additional build inputs here
+            gcc
+            fontconfig
+            freetype
+            pkgconf
           ];
         };
       in
